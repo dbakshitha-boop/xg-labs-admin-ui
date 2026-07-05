@@ -1,4 +1,4 @@
-import { createApi } from '../lib/localStore';
+import { createRestApi } from '../lib/apiClient';
 import { Portfolio } from '../types';
 
-export const portfoliosApi = createApi<Portfolio>('portfolios');
+export const portfoliosApi = createRestApi<Portfolio>('portfolios');

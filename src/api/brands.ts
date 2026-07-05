@@ -1,4 +1,4 @@
-import { createApi } from '../lib/localStore';
+import { createRestApi } from '../lib/apiClient';
 import { Brand } from '../types';
 
-export const brandsApi = createApi<Brand>('brands');
+export const brandsApi = createRestApi<Brand>('brands');

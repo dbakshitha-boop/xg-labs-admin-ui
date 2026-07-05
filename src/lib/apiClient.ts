@@ -1,5 +1,4 @@
-const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const BASE_URL = isLocalhost ? 'http://localhost:3001' : 'https://xg-labs-admin.vercel.app';
+const BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
 
 function normalizeId<T>(item: T & { _id?: string; id?: string }): T {
   if (item._id && !item.id) {
