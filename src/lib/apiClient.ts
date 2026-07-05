@@ -1,4 +1,4 @@
-const BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
+export const BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
 
 function normalizeId<T>(item: T & { _id?: string; id?: string }): T {
   if (item._id && !item.id) {

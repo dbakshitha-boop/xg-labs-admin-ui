@@ -14,14 +14,15 @@ import { Button } from './components/ui/button';
 import { LayoutDashboard, FileText, Briefcase, Mail, Users, Loader2, LogOut, Star } from 'lucide-react';
 import { cn } from './lib/utils';
 import { Login } from './components/Login';
-import { 
-  portfoliosApi, 
-  blogsApi, 
-  subscribersApi, 
-  campaignsApi, 
+import {
+  portfoliosApi,
+  blogsApi,
+  subscribersApi,
+  campaignsApi,
   contactsApi,
   brandsApi
 } from './api';
+import { BASE_URL } from './lib/apiClient';
 
 type ViewState = 'dashboard' | 'editor' | 'preview';
 type ToolType = 'portfolio' | 'blog' | 'contact' | 'marketing' | 'brand';
@@ -41,31 +42,39 @@ export default function App() {
   const [brands, setBrands] = useState<Brand[]>([]);
   
   const [currentId, setCurrentId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [p, b, s, c, m, br] = await Promise.all([
-          portfoliosApi.getAll(),
-          blogsApi.getAll(),
-          subscribersApi.getAll(),
-          campaignsApi.getAll(),
-          contactsApi.getAll(),
-          brandsApi.getAll()
-        ]);
-        
-        setPortfolios(p);
-        setBlogPosts(b);
-        setSubscribers(s);
-        setCampaigns(c);
-        setSubmissions(m);
-        setBrands(br);
-      } catch (error) {
-        console.error("Failed to load data:", error);
-        toast.error("Failed to load data");
-      } finally {
-        setIsLoading(false);
-      }
+    setIsLoading(true);
+    setApiError(null);
+    const [p, b, s, c, m, br] = await Promise.allSettled([
+      portfoliosApi.getAll(),
+      blogsApi.getAll(),
+      subscribersApi.getAll(),
+      campaignsApi.getAll(),
+      contactsApi.getAll(),
+      brandsApi.getAll(),
+    ]);
+
+    if (p.status === 'fulfilled') setPortfolios(p.value);
+    if (b.status === 'fulfilled') setBlogPosts(b.value);
+    if (s.status === 'fulfilled') setSubscribers(s.value);
+    if (c.status === 'fulfilled') setCampaigns(c.value);
+    if (m.status === 'fulfilled') setSubmissions(m.value);
+    if (br.status === 'fulfilled') setBrands(br.value);
+
+    const failures = [
+      p.status === 'rejected' ? `portfolios: ${p.reason}` : null,
+      b.status === 'rejected' ? `blogs: ${b.reason}` : null,
+      s.status === 'rejected' ? `subscribers: ${s.reason}` : null,
+      m.status === 'rejected' ? `contacts: ${m.reason}` : null,
+      br.status === 'rejected' ? `brands: ${br.reason}` : null,
+    ].filter(Boolean);
+
+    if (failures.length > 0) {
+      setApiError(`Backend: ${BASE_URL}\n${failures.join('\n')}`);
+    }
+    setIsLoading(false);
   };
 
   // Auth & Data Loading
@@ -447,6 +456,11 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
+          {apiError && (
+            <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-800 font-mono whitespace-pre-wrap shrink-0">
+              <strong>API Error — check Vercel env vars:</strong>{'\n'}{apiError}
+            </div>
+          )}
           
           {view === 'dashboard' && (
             <div className="flex-1 overflow-auto">
