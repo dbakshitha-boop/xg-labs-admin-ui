@@ -340,8 +340,7 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
                         >
                           <ImageIcon className="w-4 h-4" />
                         </Button>
-                       </div>
-                   )}
+                   </div>
                 </CardContent>
               </Card>
 
