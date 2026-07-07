@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Brand } from '../types';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -19,6 +19,7 @@ interface BrandDashboardProps {
 export function BrandDashboard({ brands, onAdd, onUpdate, onDelete }: BrandDashboardProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const [formData, setFormData] = useState<Partial<Brand>>({
     name: '',
@@ -55,6 +56,20 @@ export function BrandDashboard({ brands, onAdd, onUpdate, onDelete }: BrandDashb
     if (confirm('Are you sure you want to remove this brand?')) {
       onDelete(id);
     }
+  };
+
+  const handleLogoUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setFormData({ ...formData, logo: reader.result });
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const toggleFeatured = (brand: Brand) => {
@@ -169,12 +184,28 @@ export function BrandDashboard({ brands, onAdd, onUpdate, onDelete }: BrandDashb
                 
                 <div className="space-y-2">
                     <Label>Logo URL</Label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         <Input 
                             value={formData.logo} 
                             onChange={(e) => setFormData({...formData, logo: e.target.value})}
                             placeholder="https://..."
                         />
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleLogoUpload(e.target.files)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => fileInputRef.current?.click()}
+                          aria-label="Upload logo from computer"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </Button>
                     </div>
                     {formData.logo && (
                         <div className="mt-2 p-4 bg-black rounded-lg flex justify-center">

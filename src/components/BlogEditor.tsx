@@ -34,6 +34,7 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
   const [deviceWidth, setDeviceWidth] = useState<'100%' | '768px' | '375px'>('100%');
   
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   const { control, register, handleSubmit, watch, setValue } = useForm<BlogPost>({
     defaultValues: initialData,
@@ -107,6 +108,20 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
               textareaRef.current.setSelectionRange(start + prefix.length, end + prefix.length);
           }
       }, 0);
+  };
+
+  const handleCoverImageUpload = (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onload = () => {
+          if (typeof reader.result === 'string') {
+              setValue('coverImage', reader.result, { shouldDirty: true, shouldTouch: true });
+          }
+      };
+
+      reader.readAsDataURL(file);
   };
 
   const insertBlock = (type: string) => {
@@ -307,13 +322,24 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
                 <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
                 <CardContent>
                    <Label className="mb-2 block">Image URL</Label>
-                   <div className="flex gap-2">
+                   <div className="flex gap-2 items-center">
                         <Input {...register('coverImage')} placeholder="https://..." />
-                        <Button variant="outline" size="icon" type="button"><ImageIcon className="w-4 h-4" /></Button>
-                   </div>
-                   {formValues.coverImage && (
-                       <div className="mt-4 rounded-md overflow-hidden h-40 bg-gray-100 border">
-                           <img src={formValues.coverImage} className="w-full h-full object-cover" />
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => handleCoverImageUpload(event.target.files)}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          type="button"
+                          onClick={() => coverInputRef.current?.click()}
+                          aria-label="Upload cover image from computer"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </Button>
                        </div>
                    )}
                 </CardContent>

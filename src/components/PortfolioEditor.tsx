@@ -32,6 +32,25 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
   });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handleFileUpload = (fieldPath: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setValue(fieldPath, reader.result, { shouldDirty: true, shouldTouch: true });
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileUpload = (fieldPath: string) => {
+    uploadFileRefs.current[fieldPath]?.click();
+  };
 
   const formValues = watch();
   const [debouncedPreviewData, setDebouncedPreviewData] = useState<Portfolio>({ ...initialData, ...formValues });
@@ -302,7 +321,7 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
             <CardHeader><CardTitle>Showcase Images (Parallax)</CardTitle></CardHeader>
             <CardContent>
                <Label className="mb-2 block">Images List</Label>
-               <ShowcaseImagesArray control={control} name="showcaseImages" />
+               <ShowcaseImagesArray control={control} name="showcaseImages" fileUploadRefs={uploadFileRefs} onFileUpload={handleFileUpload} />
             </CardContent>
           </Card>
 
@@ -314,7 +333,7 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
                   <Textarea {...register('brandDirection.description')} />
               </div>
               <Label>Brand Images (Grid)</Label>
-              <ImagesArray control={control} name="brandDirection.images" />
+              <ImagesArray control={control} name="brandDirection.images" fileUploadRefs={uploadFileRefs} onFileUpload={handleFileUpload} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -358,7 +377,7 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
           <Card>
             <CardHeader><CardTitle>Client Logos</CardTitle></CardHeader>
             <CardContent>
-              <BrandsArray control={control} name="brands" />
+              <BrandsArray control={control} name="brands" fileUploadRefs={uploadFileRefs} onFileUpload={handleFileUpload} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -548,33 +567,54 @@ function StatsArray({ control, name }: { control: Control<Portfolio>; name: any 
   );
 }
 
-function ImagesArray({ control, name }: { control: Control<Portfolio>; name: any }) {
+function ImagesArray({ control, name, fileUploadRefs, onFileUpload }: { control: Control<Portfolio>; name: any; fileUploadRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>; onFileUpload: (fieldPath: string, files: FileList | null) => void; }) {
   const { fields, append, remove } = useFieldArray({ control, name });
   return (
     <div className="space-y-2">
-      {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-2 items-end">
-          <div className="flex-1">
-            <Label className="text-xs">Image URL</Label>
-            <Controller
-                control={control}
-                name={`${name}.${index}.url`}
-                render={({ field }) => <Input {...field} />}
-            />
+      {fields.map((field, index) => {
+        const fieldKey = `${name}.${index}.url`;
+        return (
+          <div key={field.id} className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Label className="text-xs">Image URL</Label>
+              <div className="flex gap-2 items-center">
+                <Controller
+                    control={control}
+                    name={fieldKey}
+                    render={({ field }) => <Input {...field} />}
+                />
+                <input
+                  ref={(el) => { fileUploadRefs.current[fieldKey] = el; }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => onFileUpload(fieldKey, event.target.files)}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  onClick={() => fileUploadRefs.current[fieldKey]?.click()}
+                  aria-label="Upload showcase image from computer"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1">
+              <Label className="text-xs">Alt Text</Label>
+               <Controller
+                  control={control}
+                  name={`${name}.${index}.alt`}
+                  render={({ field }) => <Input {...field} />}
+              />
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => remove(index)} type="button">
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </Button>
           </div>
-          <div className="flex-1">
-            <Label className="text-xs">Alt Text</Label>
-             <Controller
-                control={control}
-                name={`${name}.${index}.alt`}
-                render={({ field }) => <Input {...field} />}
-            />
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => remove(index)} type="button">
-            <Trash2 className="w-4 h-4 text-red-500" />
-          </Button>
-        </div>
-      ))}
+        );
+      })}
       <Button variant="outline" size="sm" onClick={() => append({ id: generateId(), url: '', alt: '' })} type="button">
         <Plus className="w-4 h-4 mr-2" /> Add Image
       </Button>
@@ -875,12 +915,14 @@ function CustomItemsArray({ control, name }: { control: Control<Portfolio>; name
     );
 }
 
-function BrandsArray({ control, name }: { control: Control<Portfolio>; name: any }) {
+function BrandsArray({ control, name, fileUploadRefs, onFileUpload }: { control: Control<Portfolio>; name: any; fileUploadRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>; onFileUpload: (fieldPath: string, files: FileList | null) => void; }) {
   const { fields, append, remove } = useFieldArray({ control, name });
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {fields.map((field, index) => (
+      {fields.map((field, index) => {
+        const logoFieldKey = `${name}.${index}.logo`;
+        return (
         <div key={field.id} className="relative aspect-video rounded-xl bg-black border border-zinc-800 p-4 flex flex-col items-center justify-center group">
           {/* Featured Star - Top Left */}
           <div className="absolute top-2 left-2 z-10">
@@ -914,7 +956,7 @@ function BrandsArray({ control, name }: { control: Control<Portfolio>; name: any
           <div className="flex-1 flex items-center justify-center w-full relative">
             <Controller
                 control={control}
-                name={`${name}.${index}.logo`}
+                name={logoFieldKey}
                 render={({ field }) => (
                     <div className="relative group/image">
                         {field.value ? (
@@ -926,48 +968,29 @@ function BrandsArray({ control, name }: { control: Control<Portfolio>; name: any
                                 <ImageIcon className="w-5 h-5 text-zinc-600" />
                             </div>
                         )}
-                        
-                        {/* URL Input on Hover/Focus */}
-                        <div className="absolute inset-0 z-20 opacity-0 group-hover/image:opacity-100 transition-opacity bg-black/80 flex items-center justify-center rounded">
-                             <Label htmlFor={`logo-upload-${field.name}`} className="cursor-pointer">
-                                <Link className="w-4 h-4 text-white" />
-                             </Label>
-                             {/* Hidden prompt for URL input? Or we can make this a popover. 
-                                 For simplicity, let's keep the URL input below or make this a text area overlay?
-                                 Actually, let's just make the URL input part of the card structure but less obtrusive.
-                             */}
-                        </div>
                     </div>
                 )}
             />
           </div>
           
-          {/* Logo URL Input (Hidden unless needed or maybe small at bottom) - 
-              Actually let's put the URL input in a popover or just a small input line 
-              But matching the design image: it just shows Name below.
-              Let's put the Name input at the bottom and maybe a small link icon for the URL.
-           */}
+          <div className="w-full space-y-2 mt-2">
+            <Controller
+               control={control}
+               name={`${name}.${index}.name`}
+               render={({ field }) => (
+                   <Input 
+                       {...field} 
+                       className="h-6 text-[10px] text-center bg-transparent border-none text-zinc-400 placeholder:text-zinc-700 focus-visible:ring-0 focus-visible:text-zinc-200 p-0" 
+                       placeholder="Brand Name" 
+                   />
+               )}
+            />
 
-           <div className="w-full space-y-2 mt-2">
-             <Controller
-                control={control}
-                name={`${name}.${index}.name`}
-                render={({ field }) => (
-                    <Input 
-                        {...field} 
-                        className="h-6 text-[10px] text-center bg-transparent border-none text-zinc-400 placeholder:text-zinc-700 focus-visible:ring-0 focus-visible:text-zinc-200 p-0" 
-                        placeholder="Brand Name" 
-                    />
-                )}
-             />
-             
-             {/* Collapsed URL Input - revealed on hover of a small icon or similar? 
-                 Or just always there but very subtle.
-             */}
-             <div className="relative group/url">
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
                 <Controller
                     control={control}
-                    name={`${name}.${index}.logo`}
+                    name={logoFieldKey}
                     render={({ field }) => (
                         <Input 
                             {...field} 
@@ -976,11 +999,29 @@ function BrandsArray({ control, name }: { control: Control<Portfolio>; name: any
                         />
                     )}
                 />
-             </div>
-           </div>
+              </div>
+              <input
+                ref={(el) => { fileUploadRefs.current[logoFieldKey] = el; }}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => onFileUpload(logoFieldKey, event.target.files)}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                onClick={() => fileUploadRefs.current[logoFieldKey]?.click()}
+                aria-label="Upload brand logo from computer"
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
 
         </div>
-      ))}
+      );
+      })}
       <Button variant="outline" size="sm" onClick={() => append({ id: generateId(), name: 'New Brand', logo: '', isFeatured: false })} type="button" className="aspect-video h-full flex flex-col items-center justify-center gap-2 border-dashed bg-gray-50/50 hover:bg-gray-100/50 text-gray-400 hover:text-gray-600">
         <Plus className="w-6 h-6" /> 
         <span className="text-xs">Add Brand</span>
@@ -990,24 +1031,46 @@ function BrandsArray({ control, name }: { control: Control<Portfolio>; name: any
   );
 }
 
-function ShowcaseImagesArray({ control, name }: { control: Control<Portfolio>; name: any }) {
+function ShowcaseImagesArray({ control, name, fileUploadRefs, onFileUpload }: { control: Control<Portfolio>; name: any; fileUploadRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>; onFileUpload: (fieldPath: string, files: FileList | null) => void; }) {
   const { fields, append, remove } = useFieldArray({ control, name });
   return (
     <div className="space-y-2">
-      {fields.map((field, index) => (
+      {fields.map((field, index) => {
+        const fieldKey = `${name}.${index}`;
+        return (
         <div key={field.id} className="flex gap-2 items-center">
           <div className="flex-1">
-             <Controller
-                control={control}
-                name={`${name}.${index}`}
-                render={({ field }) => <Input {...field} placeholder="Image URL" />}
-            />
+             <Label className="text-xs">Image URL</Label>
+             <div className="flex gap-2 items-center">
+               <Controller
+                  control={control}
+                  name={fieldKey}
+                  render={({ field }) => <Input {...field} placeholder="Image URL" />}
+              />
+              <input
+                ref={(el) => { fileUploadRefs.current[fieldKey] = el; }}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => onFileUpload(fieldKey, event.target.files)}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                onClick={() => fileUploadRefs.current[fieldKey]?.click()}
+                aria-label="Upload showcase image from computer"
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => remove(index)} type="button">
             <Trash2 className="w-4 h-4 text-red-500" />
           </Button>
         </div>
-      ))}
+      );
+      })}
       <Button variant="outline" size="sm" onClick={() => append('')} type="button">
         <Plus className="w-4 h-4 mr-2" /> Add Showcase Image
       </Button>
