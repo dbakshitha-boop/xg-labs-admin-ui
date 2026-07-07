@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm, useFieldArray, Control, Controller } from 'react-hook-form@7.55.0';
 import { Portfolio, Stat, Image, Step, CaseStudy, CustomSection, CustomSectionItem, ContextItem } from '../types';
 import { Input } from './ui/input';
@@ -31,6 +31,8 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
     defaultValues: initialData,
   });
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const formValues = watch();
   const [debouncedPreviewData, setDebouncedPreviewData] = useState<Portfolio>({ ...initialData, ...formValues });
 
@@ -57,6 +59,20 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
     if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  const handleHeroImageUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setValue('hero.image', reader.result, { shouldDirty: true, shouldTouch: true });
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const memoizedPreview = useMemo(() => (
@@ -242,9 +258,24 @@ export function PortfolioEditor({ initialData, onSave, onCancel }: PortfolioEdit
               </div>
               <div>
                 <Label>Hero Image URL</Label>
-                <div className="flex gap-2">
-                    <Input {...register('hero.image')} />
-                    <Button variant="outline" size="icon" type="button"><ImageIcon className="w-4 h-4" /></Button>
+                <div className="flex gap-2 items-center">
+                  <Input {...register('hero.image')} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => handleHeroImageUpload(event.target.files)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Upload hero image from computer"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
               
