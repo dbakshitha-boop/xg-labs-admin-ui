@@ -4,7 +4,8 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Label } from './ui/label';
 import { toast } from 'sonner@2.0.3';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logo from '../assets/1.png';
 
 interface LoginProps {
   onLogin: () => void;
@@ -36,10 +37,8 @@ export function Login({ onLogin }: LoginProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md border-none shadow-xl">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-zinc-900 rounded-full shadow-lg shadow-zinc-900/20">
-                <Lock className="w-6 h-6 text-white" />
-            </div>
+          <div className="flex justify-center -mb-2">
+            <img src={logo} alt="Logo" className="w-44 h-44 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             Admin Login

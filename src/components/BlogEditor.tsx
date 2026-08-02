@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useForm, Controller } from 'react-hook-form@7.55.0';
+import { useForm, useFieldArray, Control, Controller } from 'react-hook-form@7.55.0';
 import { BlogPost } from '../types';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -10,14 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './ui/resizable';
 import { Switch } from './ui/switch';
-import { 
-  Image as ImageIcon, PanelRightOpen, PanelRightClose, Smartphone, Tablet, Monitor, 
-  Sparkles, Palette, FileText, Save, Bold, Italic, List, ListOrdered, 
+import {
+  Image as ImageIcon, PanelRightOpen, PanelRightClose, Smartphone, Tablet, Monitor,
+  Sparkles, Palette, FileText, Save, Bold, Italic, List, ListOrdered,
   Quote, Link as LinkIcon, Heading1, Heading2, AlertTriangle, Terminal, Minus,
-  Maximize2, Minimize2, Timer, CheckCircle2, AlertCircle
+  Maximize2, Minimize2, Timer,
+  Trash2, Plus, ArrowUp, ArrowDown, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { BlogView } from './BlogView';
 import { cn } from '../lib/utils';
+
+function generateId() {
+  return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+}
 
 interface BlogEditorProps {
   initialData: BlogPost;
@@ -54,20 +59,6 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
     const chars = text.length;
     return { words, time, chars };
   }, [formValues.content]);
-
-  // SEO Score Calculation
-  const seoHealth = useMemo(() => {
-    const checks = [
-        { label: 'Title', valid: !!formValues.title },
-        { label: 'Slug', valid: !!formValues.slug },
-        { label: 'Excerpt', valid: !!formValues.excerpt },
-        { label: 'Cover Image', valid: !!formValues.coverImage },
-        { label: 'Content', valid: (formValues.content?.length || 0) > 100 }
-    ];
-    const score = checks.filter(c => c.valid).length;
-    const total = checks.length;
-    return { score, total, checks, isHealthy: score === total };
-  }, [formValues]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -154,6 +145,10 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
            <TabsList className="h-9">
              <TabsTrigger value="write" className="px-4 text-xs">Write</TabsTrigger>
              <TabsTrigger value="settings" className="px-4 text-xs">Settings</TabsTrigger>
+             <TabsTrigger value="info" className="px-4 text-xs">Info</TabsTrigger>
+             <TabsTrigger value="process" className="px-4 text-xs">Process</TabsTrigger>
+             <TabsTrigger value="custom" className="px-4 text-xs">Custom</TabsTrigger>
+             <TabsTrigger value="impact" className="px-4 text-xs">Impact</TabsTrigger>
              <TabsTrigger value="design" className="px-4 text-xs">Design</TabsTrigger>
            </TabsList>
            
@@ -368,6 +363,68 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
           </div>
         </TabsContent>
 
+        {/* INFO & QUOTE SECTION */}
+        <TabsContent value="info" className="max-w-4xl mx-auto w-full p-6 pb-20 mt-0 space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Post Details</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4">
+              <div>
+                  <Label>Role & Deliverables</Label>
+                  <Input {...register('infoBar.role')} />
+              </div>
+              <div>
+                  <Label>Timeline</Label>
+                  <Input {...register('infoBar.timeline')} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Key Quote</CardTitle></CardHeader>
+            <CardContent>
+              <Label>Quote Text</Label>
+              <Textarea className="h-24" {...register('quote.text')} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* PROCESS SECTION */}
+        <TabsContent value="process" className="max-w-4xl mx-auto w-full p-6 pb-20 mt-0 space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Process Steps</CardTitle></CardHeader>
+            <CardContent>
+              <StepsArray control={control} name="process" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* CUSTOM SECTIONS */}
+        <TabsContent value="custom" className="max-w-4xl mx-auto w-full p-6 pb-20 mt-0 space-y-4">
+           <Card>
+            <CardHeader><CardTitle>Custom Details Sections</CardTitle></CardHeader>
+            <CardContent>
+               <p className="text-sm text-gray-500 mb-4">Add your own sections with custom titles and key-value pairs.</p>
+               <CustomSectionsArray control={control} name="customSections" />
+            </CardContent>
+           </Card>
+        </TabsContent>
+
+        {/* IMPACT & CASE STUDIES SECTION */}
+        <TabsContent value="impact" className="max-w-4xl mx-auto w-full p-6 pb-20 mt-0 space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Impact Stats</CardTitle></CardHeader>
+            <CardContent>
+              <StatsArray control={control} name="impact.stats" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Related Case Studies</CardTitle></CardHeader>
+            <CardContent>
+              <CaseStudiesArray control={control} name="caseStudies" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* DESIGN TAB */}
         <TabsContent value="design" className="max-w-4xl mx-auto w-full p-6 pb-20 mt-0 space-y-4">
            <Card>
@@ -549,17 +606,6 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
             </Button>
         </div>
         <div className="space-x-2 flex items-center">
-          <div className="mr-4 flex items-center gap-2 text-xs font-medium px-3 py-1.5 bg-gray-100 rounded-full" title={seoHealth.isHealthy ? "Post is ready for SEO" : "Missing key SEO fields"}>
-             {seoHealth.isHealthy ? (
-                 <CheckCircle2 className="w-3 h-3 text-green-600" />
-             ) : (
-                 <AlertCircle className="w-3 h-3 text-amber-600" />
-             )}
-             <span className={seoHealth.isHealthy ? "text-green-700" : "text-amber-700"}>
-                 SEO Score: {seoHealth.score}/{seoHealth.total}
-             </span>
-          </div>
-
           <Button variant="ghost" onClick={onCancel}>Cancel</Button>
           <Button 
             variant="outline" 
@@ -627,4 +673,258 @@ export function BlogEditor({ initialData, onSave, onCancel }: BlogEditorProps) {
       </div>
     </div>
   );
+}
+
+function StatsArray({ control, name }: { control: Control<BlogPost>; name: any }) {
+  const { fields, append, remove } = useFieldArray({ control, name });
+  return (
+    <div className="space-y-2">
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Label className="text-xs">Value</Label>
+            <Controller
+                control={control}
+                name={`${name}.${index}.value`}
+                render={({ field }) => <Input {...field} placeholder="e.g. 52%" />}
+            />
+          </div>
+          <div className="flex-1">
+            <Label className="text-xs">Label</Label>
+             <Controller
+                control={control}
+                name={`${name}.${index}.label`}
+                render={({ field }) => <Input {...field} placeholder="e.g. Increase in sales" />}
+            />
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => remove(index)} type="button">
+            <Trash2 className="w-4 h-4 text-red-500" />
+          </Button>
+        </div>
+      ))}
+      <Button variant="outline" size="sm" onClick={() => append({ id: generateId(), value: '', label: '' })} type="button">
+        <Plus className="w-4 h-4 mr-2" /> Add Stat
+      </Button>
+    </div>
+  );
+}
+
+function StepsArray({ control, name }: { control: Control<BlogPost>; name: any }) {
+  const { fields, append, remove, move } = useFieldArray({ control, name });
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {fields.map((field, index) => {
+        const isExpanded = expandedId === field.id;
+        return (
+            <div key={field.id} className="border rounded-lg relative bg-gray-50 overflow-hidden transition-all duration-200">
+            {/* Header / Drag Bar */}
+            <div className="flex items-center gap-2 p-3 bg-gray-100/50 border-b border-gray-100 cursor-pointer hover:bg-gray-100" onClick={() => setExpandedId(isExpanded ? null : field.id)}>
+                <div className="p-1">
+                    {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                </div>
+                <div className="font-mono text-xs font-bold bg-white px-2 py-1 rounded border text-gray-500">
+                    Step {index + 1}
+                </div>
+                <div className="flex-1 font-medium text-sm truncate opacity-80">
+                    Process Step
+                </div>
+
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === 0} onClick={() => move(index, index - 1)} type="button">
+                        <ArrowUp className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === fields.length - 1} onClick={() => move(index, index + 1)} type="button">
+                        <ArrowDown className="w-3 h-3" />
+                    </Button>
+                    <div className="w-px h-4 bg-gray-300 mx-1" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => remove(index)} type="button">
+                        <Trash2 className="w-3 h-3" />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Body */}
+            {isExpanded && (
+                <div className="p-4 grid grid-cols-6 gap-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="col-span-1">
+                        <Label className="text-xs">Step #</Label>
+                        <Controller
+                            control={control}
+                            name={`${name}.${index}.step`}
+                            render={({ field }) => <Input {...field} />}
+                        />
+                    </div>
+                    <div className="col-span-5">
+                        <Label className="text-xs">Title</Label>
+                        <Controller
+                            control={control}
+                            name={`${name}.${index}.title`}
+                            render={({ field }) => <Input {...field} />}
+                        />
+                    </div>
+                    <div className="col-span-6">
+                        <Label className="text-xs">Description</Label>
+                        <Controller
+                            control={control}
+                            name={`${name}.${index}.description`}
+                            render={({ field }) => <Textarea {...field} className="min-h-[100px]" />}
+                        />
+                    </div>
+                </div>
+            )}
+            </div>
+        );
+      })}
+      <Button variant="outline" size="sm" onClick={() => {
+          const id = generateId();
+          append({ id, step: '01', title: '', description: '' });
+          setExpandedId(id);
+      }} type="button" className="w-full border-dashed">
+        <Plus className="w-4 h-4 mr-2" /> Add Process Step
+      </Button>
+    </div>
+  );
+}
+
+function CaseStudiesArray({ control, name }: { control: Control<BlogPost>; name: any }) {
+  const { fields, append, remove, move } = useFieldArray({ control, name });
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {fields.map((field, index) => {
+        const isExpanded = expandedId === field.id;
+        return (
+          <div key={field.id} className="border rounded-lg relative bg-gray-50 overflow-hidden transition-all duration-200">
+            <div className="flex items-center gap-2 p-3 bg-gray-100/50 border-b border-gray-100 cursor-pointer hover:bg-gray-100" onClick={() => setExpandedId(isExpanded ? null : field.id)}>
+                <div className="p-1">
+                    {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                </div>
+                <div className="font-mono text-xs font-bold bg-white px-2 py-1 rounded border text-gray-500">
+                    Study {index + 1}
+                </div>
+                <div className="flex-1 font-medium text-sm truncate opacity-80">
+                    Case Study
+                </div>
+
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === 0} onClick={() => move(index, index - 1)} type="button">
+                        <ArrowUp className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === fields.length - 1} onClick={() => move(index, index + 1)} type="button">
+                        <ArrowDown className="w-3 h-3" />
+                    </Button>
+                    <div className="w-px h-4 bg-gray-300 mx-1" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => remove(index)} type="button">
+                        <Trash2 className="w-3 h-3" />
+                    </Button>
+                </div>
+            </div>
+
+            {isExpanded && (
+              <div className="p-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                <div>
+                    <Label className="text-xs">Title</Label>
+                    <Controller
+                        control={control}
+                        name={`${name}.${index}.title`}
+                        render={({ field }) => <Input {...field} />}
+                    />
+                </div>
+                <div>
+                    <Label className="text-xs">Image URL</Label>
+                    <Controller
+                        control={control}
+                        name={`${name}.${index}.image`}
+                        render={({ field }) => <Input {...field} />}
+                    />
+                </div>
+                <div>
+                    <Label className="text-xs">Link/Action Text</Label>
+                    <Controller
+                        control={control}
+                        name={`${name}.${index}.description`}
+                        render={({ field }) => <Input {...field} />}
+                    />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <Button variant="outline" size="sm" onClick={() => {
+          const id = generateId();
+          append({ id, title: '', image: '', description: 'See case study' });
+          setExpandedId(id);
+      }} type="button" className="w-full border-dashed">
+        <Plus className="w-4 h-4 mr-2" /> Add Case Study
+      </Button>
+    </div>
+  );
+}
+
+function CustomSectionsArray({ control, name }: { control: Control<BlogPost>; name: any }) {
+    const { fields, append, remove } = useFieldArray({ control, name });
+    return (
+      <div className="space-y-6">
+        {fields.map((field, index) => (
+          <div key={field.id} className="border p-4 rounded-lg relative bg-gray-50 border-gray-200">
+            <Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => remove(index)} type="button">
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </Button>
+
+            <div className="mb-4 pr-10">
+                 <Label>Section Title</Label>
+                 <Controller
+                  control={control}
+                  name={`${name}.${index}.title`}
+                  render={({ field }) => <Input {...field} placeholder="e.g. Technology Stack" className="font-bold" />}
+                 />
+            </div>
+
+            <div className="pl-4 border-l-2 border-gray-300">
+                <Label className="mb-2 block text-xs uppercase text-gray-500">Items (Key - Value)</Label>
+                <CustomItemsArray control={control} name={`${name}.${index}.items`} />
+            </div>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" onClick={() => append({ id: generateId(), title: '', items: [] })} type="button">
+          <Plus className="w-4 h-4 mr-2" /> Add New Custom Section
+        </Button>
+      </div>
+    );
+}
+
+function CustomItemsArray({ control, name }: { control: Control<BlogPost>; name: any }) {
+    const { fields, append, remove } = useFieldArray({ control, name });
+    return (
+      <div className="space-y-2">
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex gap-2 items-center">
+            <div className="w-1/3">
+               <Controller
+                  control={control}
+                  name={`${name}.${index}.label`}
+                  render={({ field }) => <Input {...field} placeholder="Label (e.g. Frontend)" className="h-8 text-sm" />}
+               />
+            </div>
+            <div className="flex-1">
+               <Controller
+                  control={control}
+                  name={`${name}.${index}.value`}
+                  render={({ field }) => <Input {...field} placeholder="Value (e.g. React, TypeScript)" className="h-8 text-sm" />}
+               />
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => remove(index)} type="button" className="h-8 w-8">
+              <Trash2 className="w-3 h-3 text-red-500" />
+            </Button>
+          </div>
+        ))}
+        <Button variant="ghost" size="sm" onClick={() => append({ id: generateId(), label: '', value: '' })} type="button" className="text-xs h-7">
+          <Plus className="w-3 h-3 mr-1" /> Add Item
+        </Button>
+      </div>
+    );
 }

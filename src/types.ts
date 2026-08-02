@@ -154,6 +154,19 @@ export interface BlogPost {
   enableNewsletter?: boolean;
   authorTwitter?: string;
   authorLinkedin?: string;
+  infoBar: {
+    role: string;
+    timeline: string;
+  };
+  quote: {
+    text: string;
+  };
+  process: Step[];
+  customSections: CustomSection[];
+  impact: {
+    stats: Stat[];
+  };
+  caseStudies: CaseStudy[];
 }
 
 export interface Brand {
@@ -201,7 +214,20 @@ The future is bright for designers who are willing to adapt and learn new techno
     fontHeading: 'serif',
     fontBody: 'sans',
     accentColor: '#000000',
-  }
+  },
+  infoBar: {
+    role: '',
+    timeline: '',
+  },
+  quote: {
+    text: '',
+  },
+  process: [],
+  customSections: [],
+  impact: {
+    stats: [],
+  },
+  caseStudies: [],
 };
 
 export const initialPortfolio: Portfolio = {

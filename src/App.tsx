@@ -14,6 +14,7 @@ import { Button } from './components/ui/button';
 import { LayoutDashboard, FileText, Briefcase, Mail, Users, Loader2, LogOut, Star } from 'lucide-react';
 import { cn } from './lib/utils';
 import { Login } from './components/Login';
+import logo from './assets/2.png';
 import {
   portfoliosApi,
   blogsApi,
@@ -368,11 +369,11 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 font-sans flex overflow-hidden">
       
       {/* Sidebar Navigation */}
-      <aside className="w-20 bg-zinc-900 flex flex-col items-center py-6 gap-6 shrink-0 z-50">
-        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center mb-4">
-          <LayoutDashboard className="w-6 h-6 text-white" />
+      <aside className="w-20 bg-zinc-900 flex flex-col items-center pb-6 gap-6 shrink-0 z-50">
+        <div className="w-28 h-28 rounded-lg flex items-center justify-center overflow-hidden -mt-6">
+          <img src={logo} alt="Logo" className="w-full h-full object-contain" />
         </div>
-        
+
         <div className="flex flex-col gap-4 w-full px-2 flex-1">
             <button 
                 onClick={() => switchTool('contact')}

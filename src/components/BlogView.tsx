@@ -444,6 +444,114 @@ export function BlogView({ post, activeTab = 'content', onBack }: BlogViewProps)
           </div>
       </div>
 
+      {/* Info Bar */}
+      {(post.infoBar?.role || post.infoBar?.timeline) && (
+      <section id="section-info" className={cn("w-full max-w-4xl mx-auto px-6 py-12 border-y", theme.border)}>
+        <div className="grid grid-cols-2 gap-8">
+           <div>
+             <h4 className={cn("text-xs font-bold uppercase tracking-widest mb-2", theme.muted)}>Role & Deliverables</h4>
+             <p className="text-sm opacity-90">{post.infoBar.role}</p>
+           </div>
+           <div>
+             <h4 className={cn("text-xs font-bold uppercase tracking-widest mb-2", theme.muted)}>Timeline</h4>
+             <p className="text-sm opacity-90">{post.infoBar.timeline}</p>
+           </div>
+        </div>
+      </section>
+      )}
+
+      {/* Quote */}
+      {post.quote?.text && (
+      <section id="section-quote" className="w-full max-w-4xl mx-auto px-6 py-24">
+        <blockquote className={cn("text-2xl md:text-4xl font-light leading-tight text-center", fontHeading)}>
+          "{post.quote.text}"
+        </blockquote>
+      </section>
+      )}
+
+      {/* Process */}
+      {post.process && post.process.length > 0 && (
+      <section id="section-process" className={cn("py-24 transition-colors", theme.card)}>
+        <div className="w-full max-w-5xl mx-auto px-6">
+          <h3 className={cn("text-xs font-bold uppercase tracking-widest mb-16", theme.muted)}>Process Overview</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {post.process.map((step) => (
+              <div key={step.id} className="p-6 border rounded-lg" style={{ borderColor: `${accentColor}20` }}>
+                <div className="text-xs font-bold mb-4" style={{ color: accentColor }}>{step.step} {step.title}</div>
+                <p className="text-sm leading-relaxed opacity-80">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      )}
+
+      {/* Custom Sections */}
+      {post.customSections?.map((section) => (
+        <section id="section-custom" key={section.id} className={cn("w-full max-w-5xl mx-auto px-6 py-20 border-t", theme.border)}>
+          <div className="grid md:grid-cols-12 gap-8">
+             <div className="md:col-span-4">
+               <h3 className={cn("text-xs font-bold uppercase tracking-widest mb-6", theme.muted)}>{section.title}</h3>
+             </div>
+             <div className="md:col-span-8">
+               <div className="grid sm:grid-cols-2 gap-8">
+                 {section.items.map((item) => (
+                   <div key={item.id}>
+                     <h4 className={cn("text-xs font-bold uppercase tracking-wide mb-2", theme.muted)}>{item.label}</h4>
+                     <p className="text-lg font-light leading-relaxed opacity-90">
+                       {item.value}
+                     </p>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          </div>
+        </section>
+      ))}
+
+      {/* Impact */}
+      {post.impact?.stats && post.impact.stats.length > 0 && (
+      <section id="section-impact" className={cn("w-full max-w-5xl mx-auto px-6 py-24 border-t", theme.border)}>
+         <h3 className={cn("text-xs font-bold uppercase tracking-widest text-center mb-16", theme.muted)}>Overall Impact</h3>
+         <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+            {post.impact.stats.map((stat) => (
+              <div key={stat.id}>
+                <div className={cn("text-4xl lg:text-6xl font-light mb-4", fontHeading)}>
+                    {stat.value}
+                </div>
+                <div className={cn("text-xs uppercase tracking-wide", theme.muted)}>{stat.label}</div>
+              </div>
+            ))}
+         </div>
+      </section>
+      )}
+
+      {/* Case Studies */}
+      {post.caseStudies && post.caseStudies.length > 0 && (
+      <section id="section-case-studies" className={cn("w-full max-w-5xl mx-auto px-6 py-20 border-t", theme.border)}>
+        <h3 className={cn("text-xs font-bold uppercase tracking-widest mb-12", theme.muted)}>Related Case Studies</h3>
+        <div className="grid md:grid-cols-3 gap-8">
+          {post.caseStudies.map((study) => (
+            <div key={study.id} className="group cursor-pointer">
+              <div className={cn("aspect-[4/3] overflow-hidden mb-4", theme.card)}>
+                 <img
+                    src={study.image}
+                    alt={study.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                 />
+              </div>
+              <h4 className="text-lg font-medium leading-snug mb-2 opacity-90 transition-colors group-hover:opacity-100">{study.title}</h4>
+              <p className={cn("text-xs uppercase tracking-wide", theme.muted)}>
+                {study.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+      )}
+
       {/* Footer / Author Bio */}
       <section id="section-footer" className={cn("w-full py-20 border-t mt-12", theme.border, theme.bg)}>
           <div className="max-w-3xl mx-auto px-6 text-center">
